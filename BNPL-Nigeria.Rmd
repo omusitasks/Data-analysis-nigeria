@@ -1,0 +1,263 @@
+---
+title: "THE IMPACT OF DATA ANALYTICS APPLICATION ON BUY NOW PAY LATER BUSINESS IN NIGERIA"
+author: "Student Name"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+    pdf_document:
+        latex_engine: xelatex
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+webshot::install_phantomjs()
+```
+
+```{r, echo=FALSE, warning=FALSE}
+# Some housekeeping code
+rm(list=ls()) # # remove all the variables in the environment
+RNGkind(sample.kind="Rounding") # set the random number generator kind
+
+#Color Format (any color)
+colr = function(x,color){
+  outputFormat = knitr::opts_knit$get("rmarkdown.pandoc.to")
+  if(outputFormat == 'latex')
+    paste("\\textcolor{",color,"}{",x,"}",sep="")
+  else if(outputFormat == 'html')
+    paste("<font color='",color,"'>",x,"</font>",sep="")
+  else
+    x
+}
+
+#Color Format (green color)
+green = function(x){
+  outputFormat = knitr::opts_knit$get("rmarkdown.pandoc.to")
+  if(outputFormat == 'latex')
+    paste("\\textcolor{green}{",x,"}",sep="")
+  else if(outputFormat == 'html')
+    paste("<font color='green'>",x,"</font>",sep="")
+  else
+    x
+}
+```
+
+# INTRODUCTION
+
+## This study will be making an exploration and an examination of the existing relationship between data analytics, organizational performance, and knowledge management practices in the business model of buy now pay later within Nigeria. This will be of great importance in providing recommendations to all the stakeholders within this form of business ranging from the customers to the companies that make these sales. 
+
+# EXECUTIVE SUMMARY(BUSINESS OBJECTIVE)
+
+## The BNPL business company in Nigeria wants to understand the driving factors (or driver variables) behind business performance, i.e. the variables which are strong indicators of business performance. The company can utilise this knowledge for its portfolio and risk assessment.
+
+# Loading our dataset
+## Importing Necessary Libraries
+```{r, echo=FALSE, warning=FALSE}
+#load the required packages
+library(ggplot2) # for graphics
+library(dplyr)
+library(tidyverse) # for cleaning the dataset
+library(readr) #load csv
+library(DataExplorer) #look for missing values
+library(plotly) # table creation
+library(lubridate) # enable working with dates
+
+```
+
+
+## Read the BNPL dataset using readr()
+```{r, echo=FALSE, warning=FALSE}
+##Data Reading
+bnpl.df <- read.csv("Nigeria-BNPL-dataset.csv")
+
+```
+
+
+
+## Display the first 5 observations of our BNPL Dataset
+```{r, echo=FALSE, warning=FALSE}
+#get the first 5 records of our dataset
+head(bnpl.df, n =5)
+
+```
+
+## Display the last 5 observations of our BNPL Dataset
+```{r, echo=FALSE, warning=FALSE}
+#get the last 5 records of our dataset
+tail(bnpl.df, n =5)
+
+```
+
+
+
+## Data description
+### Understanding the features of BNPL Nigeria Business dataset
+```{r, echo=FALSE, warning=FALSE}
+
+table.values <- rbind(c('Total_Budget_Cost', 'Pay_Later_duration', 'Gender', 'employment_title', 'employment_length', 'home_ownership', 'Annual_income', 'Date_items_bought', 'Pay_Later_Status' , 'Buying_For', 'cutomer_address'), c("The listed amount of the goods purchased  by the customer.", 
+     "Time spent by the customer to pay back", 
+     "Assigned gender personality", 
+     "The job title supplied by the Customer when buying now for the products*", 
+    "Employment length of customer in years. Possible values are between 0 and 10 where 0 means less than one year and 10 means ten or more years.",
+    "The home ownership status provided by the customer during registration. Our values are: RENT, OWN, MORTGAGE, OTHER",
+    "The self-reported annual income provided by the customer during registration.",
+    "The month which the products were bought",
+    "Current status of the customer pay later",
+    "A category provided by the customer when buying the products",
+    "The region  provided by the customer"))
+table_fig <- plot_ly(
+  type = 'table',
+  columnorder = c(1,2),
+  columnwidth = c(12,12),
+  header = list(
+    values = c('<b>Data Variables</b><br>', '<b>Description</b>'),
+    line = list(color = '#3deb34'),
+    fill = list(color = '#ebe834'),
+    align = c('left','center'),
+    font = list(color = 'white', size = 12),
+    height = 40
+  ),
+  cells = list(
+    values = table.values,
+    line = list(color = '#3deb34'),
+    fill = list(color = c('#64eb34', 'white')),
+    align = c('left', 'left'),
+    font = list(color = c('#506784'), size = 12),
+    height = 30
+    ))
+# display the table figure
+table_fig
+
+```
+
+
+# Dataset Cleaning
+## Look for missing values
+```{r, echo=FALSE, warning=FALSE}
+options(repr.plot.width=8, repr.plot.height=3)
+# look for missing values using the DataExplorer package
+plot_missing(bnpl.df)
+```
+
+## Looking at the size of our dataset and the missing value plot above, its clear that there are no missing values.So we can move on
+
+
+
+## Understand the data type for our dataset variables
+```{r, echo=FALSE, warning=FALSE}
+# get the glimpse of the dataset
+glimpse(bnpl.df)
+
+```
+
+## Since Gender, employment_length, home_ownership,Pay_Later_Status and Buying_For are categorical variables, the type in which they are in cannot lead to accuracy when analysis is done. Therefore, lets us convert them into the right format "factor" type.
+```{r, echo=FALSE, warning=FALSE}
+
+# changing to categorical type
+bnpl.df$Gender <- as.factor(bnpl.df$Gender)
+bnpl.df$employment_length <- as.factor(bnpl.df$employment_length)
+bnpl.df$home_ownership <- as.factor(bnpl.df$home_ownership)
+bnpl.df$Pay_Later_Status <- as.factor(bnpl.df$Pay_Later_Status)
+bnpl.df$Buying_For <- as.factor(bnpl.df$Buying_For)
+
+
+#change the date format as well
+bnpl.df$Date_items_bought <- mdy(bnpl.df$Date_items_bought)
+
+# Confirm that the variable types has been converted
+# get the glimpse of the dataset
+glimpse(bnpl.df)
+```
+
+# Eploratory Data Analysis(EDA)
+
+## The overal goal of EDA is to get an understanding for which variables are important, view summary statistics, and visualize the data
+## Display the total number of observations and variables in BNPL dataset
+```{r, echo=FALSE, warning=FALSE}
+
+##display the dataset dimension
+dim(bnpl.df)  #shows the total number of rows and columns
+
+```
+
+## Visualizations
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Get the Payment Later Status of the customer
+
+#color by group
+ggplot(bnpl.df,aes(x = Pay_Later_Status, fill = Pay_Later_Status )) +
+  ggtitle("Later Payment Status of the customer") +
+  geom_bar()
+
+
+#one color to all bars
+# ggplot(bnpl.df,aes(x = Pay_Later_Status)) +
+#   ggtitle("Later Payment Status of the customer") +
+#   geom_bar()
+```
+
+```{r, echo=FALSE, warning=FALSE}
+
+# scale Annual_income and Total_Budget_Cost to have mean btw 0 and 1
+
+bnpl.df$Annual_income <- scale(bnpl.df$Annual_income)
+#bnpl.df$Total_Budget_Cost <- scale(bnpl.df$Total_Budget_Cost)
+
+## Correlation between the Annual customer income and the total budget cost in male and female
+
+bnpl.plot <- ggplot(bnpl.df, aes(Annual_income, Total_Budget_Cost, colour = Gender)) +
+  geom_point()
+
+bnpl.plot
+```
+
+```{r, echo=FALSE, warning=FALSE}
+
+# Getting the analysis of between male and female, who between, have paid and not paid as well
+
+ggplot(bnpl.df, aes(Gender, ..count..)) + geom_bar(aes(fill = Buying_For ), position = "dodge")
+
+
+```
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+# scale Annual_income  to have mean btw 0 and 1
+
+bnpl.df$Annual_income <- scale(bnpl.df$Annual_income)
+
+## Correlation between the Annual customer income and the total budget cost based on customer home ownership
+
+bnpl.plot <- ggplot(bnpl.df, aes(Annual_income, Total_Budget_Cost, colour = home_ownership)) +
+  geom_point()
+
+bnpl.plot
+```
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Main group that the goods are purchased for
+
+ggplot(bnpl.df,aes(x=Buying_For, fill = Buying_For )) +
+  ggtitle("Customer purpose leading group") +
+  geom_bar()
+
+```
+
+```{r, echo=FALSE, warning=FALSE}
+
+# Getting the analysis of between male and female, who between, have paid and not paid as well
+
+ggplot(bnpl.df, aes(Gender, ..count..)) + geom_bar(aes(fill = Pay_Later_Status ), position = "dodge")
+
+
+```
+
+
+
